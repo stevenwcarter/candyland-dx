@@ -4,3 +4,10 @@ LICENSES
 LICENSE
 temp
 README.md
+.dockerignore
+Dockerfile
+.gitignore
+.github
+.git
+package-lock.json
+package.json
