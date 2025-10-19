@@ -1,0 +1,31 @@
+@import "tailwindcss";
+
+@layer components {
+  .colorbox {
+    height: 34%;
+    aspect-ratio: 1/1;
+    margin: 20px;
+  }
+  .blue {
+    background-color: var(--color-blue-700);
+  }
+  .red {
+    background-color: var(--color-red-700);
+  }
+  .green {
+    background-color: var(--color-green-700);
+  }
+  .yellow {
+    background-color: var(--color-yellow-300);
+  }
+  .purple {
+    background-color: var(--color-purple-700);
+  }
+  .orange {
+    background-color: var(--color-orange-500);
+  }
+}
+
+body {
+  background-color: var(--color-gray-600);
+}
