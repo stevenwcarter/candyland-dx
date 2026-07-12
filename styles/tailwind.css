@@ -27,3 +27,87 @@
 body {
   background-color: var(--color-gray-600);
 }
+
+/* --- Draw feedback: main-card flip + history trail (driven from main.rs) ---
+   The `.a`/`.b` variants are identical; main.rs alternates the class each draw so
+   the animation-name changes and the browser replays it even on a repeat card.
+   Perspective is baked into the keyframe transform so no ancestor setup is needed. */
+
+@keyframes cl-flip-a {
+  from { transform: perspective(1200px) rotateY(90deg); }
+  to { transform: perspective(1200px) rotateY(0deg); }
+}
+@keyframes cl-flip-b {
+  from { transform: perspective(1200px) rotateY(90deg); }
+  to { transform: perspective(1200px) rotateY(0deg); }
+}
+.card-flip.a { animation: cl-flip-a 500ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+.card-flip.b { animation: cl-flip-b 500ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+
+.trail {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: 8px;
+  overflow: hidden;
+  padding: 12px 12px 16px;
+  min-height: 70px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.12);
+}
+
+/* Opaque label sits above the minis so a new item is hidden until it slides clear. */
+.trail-label {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  padding: 0 12px 0 4px;
+  background: color-mix(in oklab, var(--color-gray-600), black 12%);
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.minis {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: 8px;
+}
+
+/* Existing items slide over to make room; the group slides as one. */
+@keyframes cl-slide-a {
+  from { transform: translateX(-50px); }
+  to { transform: translateX(0); }
+}
+@keyframes cl-slide-b {
+  from { transform: translateX(-50px); }
+  to { transform: translateX(0); }
+}
+.minis.a { animation: cl-slide-a 500ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+.minis.b { animation: cl-slide-b 500ms cubic-bezier(0.2, 0.7, 0.3, 1); }
+
+/* The newest mini fades in (slide comes from the group animation above);
+   a keyed <For> means only the freshly-created node runs this. */
+@keyframes cl-mini-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.mini {
+  flex: 0 0 auto;
+  width: 42px;
+  height: 42px;
+  border-radius: 8px;
+  background: var(--color-gray-900);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  overflow: hidden;
+  animation: cl-mini-in 500ms ease both;
+}
+.msq { height: 60%; aspect-ratio: 1/1; border-radius: 1px; }
+.msq.small { height: 46%; }
+.mmini { max-height: 100%; max-width: 100%; object-fit: cover; border-radius: 6px; }

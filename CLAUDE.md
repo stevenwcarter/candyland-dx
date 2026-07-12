@@ -38,12 +38,21 @@ Trunk auto-downloads its own `wasm-bindgen` and the **Tailwind v4 standalone CLI
   `color: None`). `Card::empty()` is the pre-first-draw placeholder. `init_cards()`
   builds 6 colors × (4 singles + 3 doubles) + 5 symbol cards = 47, shuffled;
   `get_card()` pops the last card and auto-reshuffles a fresh deck when empty.
-- **UI** (`main.rs`): `App` holds three `RwSignal`s — `cards` (remaining deck),
-  `card` (currently shown), `flash` (opacity toggle). `card_face(Card) -> AnyView`
-  branches on which variant is set and is called inside a reactive closure
-  (`{move || card_face(card.get())}`) so the view updates when `card` changes.
-  Each branch returns `.into_any()` because the arms produce different node types.
-  The 40ms draw flash uses `set_timeout` (no extra timer crate).
+- **UI** (`main.rs`): `App` holds four `RwSignal`s — `deck` (remaining cards),
+  `card` (currently shown), `recent` (the history trail, `Vec<(u32, Card)>` newest
+  first, capped at `TRAIL_LEN`), and `seq` (monotonic draw counter). `card_face` /
+  `mini_face` return `AnyView` (arms produce different node types) and run inside
+  reactive closures so the view updates on draw. Layout is a flex column: title,
+  centered card, and a bottom **history trail** (`.trail`).
+- **Draw-feedback animations** (CSS keyframes in `styles/tailwind.css`, driven from
+  `main.rs`): every tap plays a 500ms **card flip** plus a 500ms trail update (the
+  new mini slides in from behind the opaque "RECENT" label while fading up; existing
+  minis slide over). CSS animations don't replay on a persistent node, so
+  `anim_class(seq)` alternates an `a`/`b` class each draw — the two keyframe sets are
+  identical, but changing the `animation-name` forces the browser to replay even on a
+  repeat card. The trail uses a **keyed `<For>`** (key = `seq` id) so only the newly
+  created mini runs its fade-in. `Element.animate` (WAAPI) was avoided because it
+  needs `web_sys_unstable_apis`.
 - **Reads across writes**: the draw handler uses `cards.get_untracked()` (clones the
   Vec) rather than holding a `.read()` guard across the subsequent `cards.set()` —
   holding a signal borrow across a write panics.
