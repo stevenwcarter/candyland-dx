@@ -71,6 +71,6 @@ Trunk auto-downloads its own `wasm-bindgen` and the **Tailwind v4 standalone CLI
   ~13MB — mostly the SWS binary) serving `dist/` from `/public` on port 80. This is
   a static SPA — there is no app server binary of our own. On-demand compression is
   on but does not apply to the (small) `.wasm`.
-- CI (`.github/workflows/dioxus.yml`): on push to any branch / tags / PRs, builds
-  and pushes the image to a private registry, then pings Watchtower to redeploy.
-  The Dockerfile changed in the Leptos migration; the CI workflow itself is unchanged.
+- CI (`.github/workflows/build.yml`): on push to any branch / tags / PRs, builds
+  and pushes the image (`<registry>/candyland-roller`) to a private registry, then
+  pings Watchtower to redeploy.

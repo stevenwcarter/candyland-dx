@@ -1,6 +1,6 @@
-# This is a basic workflow to help you get started with Actions
+# Build the Leptos CSR bundle into a Docker image, push it, and redeploy.
 
-name: Dioxus build
+name: Build & deploy
 
 # Controls when the action will run. Triggers the workflow on push or pull request
 # events but only for the master branch
@@ -16,7 +16,7 @@ on:
       - "develop"
 
 jobs:
-  rust-build:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -26,7 +26,7 @@ jobs:
         uses: docker/metadata-action@v5
         with:
           images: |
-            ${{ secrets.docker_registry }}/candyland-dx
+            ${{ secrets.docker_registry }}/candyland-roller
           tags: |
             type=ref,event=branch
             type=ref,event=pr
@@ -48,8 +48,8 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/candyland-dx:buildcache
-          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/candyland-dx:buildcache,mode=max
+          cache-from: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/candyland-roller:buildcache
+          cache-to: type=registry,ref=${{ secrets.DOCKER_REGISTRY }}/candyland-roller:buildcache,mode=max
       - name: Trigger Watchtower update
         # Notify Watchtower to pull the exact image:tag refs we just pushed and
         # redeploy any container running them. Passes every tag from the metadata
@@ -64,4 +64,3 @@ jobs:
           curl -fsS --retry 3 --retry-delay 5 --retry-connrefused -X POST \
             -H "Authorization: Bearer ${WATCHTOWER_HTTP_API_TOKEN}" \
             "https://watchtower.javapl.us/v1/update?image=${images}"
-
