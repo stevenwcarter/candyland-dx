@@ -7,6 +7,17 @@ pub struct Card {
     pub symbol: Option<String>,
 }
 
+impl Card {
+    /// The starting placeholder card, shown before the first draw.
+    pub fn empty() -> Self {
+        Card {
+            color: None,
+            count: 0,
+            symbol: None,
+        }
+    }
+}
+
 pub fn init_cards() -> Vec<Card> {
     let colors: Vec<&str> = vec!["red", "yellow", "green", "blue", "purple", "orange"];
     let symbols: Vec<&str> = vec!["lollipop", "cone", "peppermint", "gumdrop", "fudge"];
@@ -66,5 +77,20 @@ mod tests {
         let deck = init_cards();
         assert_eq!(deck.len(), 47);
         println!("{deck:#?}");
+    }
+
+    #[test]
+    fn get_card_pops_one_and_returns_the_rest() {
+        let deck = init_cards();
+        let (card, rest) = get_card(&deck);
+        assert_eq!(rest.len(), deck.len() - 1);
+        assert_eq!(*deck.last().unwrap(), card);
+    }
+
+    #[test]
+    fn get_card_reshuffles_a_fresh_deck_when_empty() {
+        let (_card, rest) = get_card(&[]);
+        // Drew from a fresh 47-card deck, leaving 46.
+        assert_eq!(rest.len(), 46);
     }
 }

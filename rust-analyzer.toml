@@ -1,2 +1,2 @@
 [rustfmt]
-overrideCommand = ["dx", "fmt", "--all-code", "-f", "-"]
+overrideCommand = ["leptosfmt", "--stdin", "--rustfmt"]

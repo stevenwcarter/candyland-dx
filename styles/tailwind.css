@@ -1,11 +1,9 @@
 @import "tailwindcss";
 
+/* Scan the Rust sources so Tailwind sees the utility classes used in view! macros. */
+@source "../src";
+
 @layer components {
-  .colorbox {
-    height: 34%;
-    aspect-ratio: 1/1;
-    margin: 20px;
-  }
   .blue {
     background-color: var(--color-blue-700);
   }

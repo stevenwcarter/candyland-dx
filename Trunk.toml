@@ -1,0 +1,14 @@
+[build]
+target = "index.html"
+dist = "dist"
+filehash = true
+minify = "on_release"
+
+[serve]
+port = 8080
+open = false
+
+# Let Trunk download and manage the Tailwind v4 standalone CLI so the build is
+# self-contained (no npm / node needed). Keep this pinned.
+[tools]
+tailwindcss = "4.1.11"

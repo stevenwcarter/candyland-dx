@@ -1,101 +1,94 @@
-use dioxus::prelude::*;
-use gloo_timers::future::TimeoutFuture;
+use leptos::mount::mount_to_body;
+use leptos::prelude::*;
+use std::time::Duration;
+
 mod cards;
-use crate::cards::{get_card, init_cards, Card};
-const FAVICON: Asset = asset!("/assets/favicon.ico");
-const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
-fn get_card_image(card: &Card) -> Asset {
+use crate::cards::{Card, get_card, init_cards};
+
+/// Static URL for a symbol card's image. Card images are shipped by Trunk from
+/// `assets/cards/` (see `index.html`) and served at `/assets/cards/<name>.jpg`.
+fn card_image(card: &Card) -> &'static str {
     match card.symbol.as_deref() {
-        Some("cone") => asset!("/assets/cards/cone.jpg"),
-        Some("fudge") => asset!("/assets/cards/fudge.jpg"),
-        Some("gumdrop") => asset!("/assets/cards/gumdrop.jpg"),
-        Some("lollipop") => asset!("/assets/cards/lollipop.jpg"),
-        Some("peppermint") => asset!("/assets/cards/peppermint.jpg"),
+        Some("cone") => "/assets/cards/cone.jpg",
+        Some("fudge") => "/assets/cards/fudge.jpg",
+        Some("gumdrop") => "/assets/cards/gumdrop.jpg",
+        Some("lollipop") => "/assets/cards/lollipop.jpg",
+        Some("peppermint") => "/assets/cards/peppermint.jpg",
         _ => unreachable!("should not be called with a color card"),
     }
 }
-fn main() {
-    dioxus::launch(App);
-}
-#[derive(Props, PartialEq, Clone)]
-pub struct CardProps {
-    pub card: Card,
-}
-#[component]
-fn CardBlock(card: Card) -> Element {
+
+/// Render the face of a single card: one/two color squares, a symbol image, or
+/// the starting placeholder.
+fn card_face(card: Card) -> AnyView {
     if let Some(color) = card.color {
         if card.count == 2 {
-            rsx! {
-                div { class: format!("h-[34%] aspect-square m-5 {color}") }
-                div { class: format!("h-[34%] aspect-square m-5 {color}") }
+            view! {
+                <div class=format!("h-[34%] aspect-square m-5 {color}")></div>
+                <div class=format!("h-[34%] aspect-square m-5 {color}")></div>
             }
+            .into_any()
         } else {
-            rsx! {
-                div { class: format!("h-[70%] aspect-square m-5 {color}") }
-            }
+            view! { <div class=format!("h-[70%] aspect-square m-5 {color}")></div> }.into_any()
         }
     } else if card.symbol.is_some() {
-        rsx! {
-            div { class: "overflow-hidden rounded-xl h-full w-full relative",
-                img { class: "object-scale-down", src: get_card_image(&card) }
-            }
+        view! {
+            <div class="overflow-hidden rounded-xl h-full w-full relative">
+                <img class="object-scale-down" src=card_image(&card) />
+            </div>
         }
+        .into_any()
     } else {
-        rsx! {
-            div { class: "h-full w-full flex items-center justify-center", "get your first card" }
-        }
+        view! { <div class="h-full w-full flex items-center justify-center">"get your first card"</div> }
+        .into_any()
     }
 }
+
 #[component]
-fn App() -> Element {
-    let mut cards = use_signal(init_cards);
-    let mut card = use_signal(|| Card {
-        color: None,
-        count: 0,
-        symbol: None,
-    });
-    let mut flash = use_signal(|| false);
+fn App() -> impl IntoView {
+    let cards = RwSignal::new(init_cards());
+    let card = RwSignal::new(Card::empty());
+    let flash = RwSignal::new(false);
+
     let next_card = move |_| {
-        let (new_card, new_cards) = get_card(&cards.read());
+        let (new_card, new_cards) = get_card(&cards.get_untracked());
         card.set(new_card);
         cards.set(new_cards);
         flash.set(true);
-        spawn(async move {
-            TimeoutFuture::new(40).await;
-            flash.set(false);
-        });
+        set_timeout(move || flash.set(false), Duration::from_millis(40));
     };
-    let shuffle_deck = move |_| {
+
+    let new_game = move |_| {
         cards.set(init_cards());
-        card.set(Card {
-            color: None,
-            count: 0,
-            symbol: None,
-        });
+        card.set(Card::empty());
     };
-    rsx! {
-        document::Link { rel: "icon", href: FAVICON }
-        document::Link { rel: "stylesheet", href: TAILWIND_CSS }
-        document::Meta {
-            name: "viewport",
-            content: "width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no",
-        }
-        div { class: "h-[100vh] overflow-hidden",
-            h1 { class: "text-white mt-6 text-center text-4xl", "Candyland Roller" }
-            div { class: "flex flex-col justify-center items-center h-screen text-white",
-                button {
-                    class: "p-6 text-xl mb-6 flex items-center justify-center bg-gray-800 rounded-xl hover:bg-gray-800/70 hover:border hover:border-2 hover:border-gray-700",
-                    onclick: shuffle_deck,
+
+    view! {
+        <div class="h-[100vh] overflow-hidden">
+            <h1 class="text-white mt-6 text-center text-4xl">"Candyland Roller"</h1>
+            <div class="flex flex-col justify-center items-center h-screen text-white">
+                <button
+                    class="p-6 text-xl mb-6 flex items-center justify-center bg-gray-800 rounded-xl hover:bg-gray-800/70 hover:border hover:border-2 hover:border-gray-700"
+                    on:click=new_game
+                >
                     "New Game"
-                }
-                div { class: "p-8 rounded",
-                    button { class: "cards", onclick: next_card,
-                        div { class: format!("h-[40vh] aspect-square flex items-center justify-center bg-gray-800 rounded-xl hover:bg-gray-800/70 hover:border hover:border-2 hover:border-gray-900 transition-opacity duration-[50] {}", if *flash.read() { "opacity-0" } else { "opacity-100" }),
-                            CardBlock { card: card.read().clone() }
-                        }
-                    }
-                }
-            }
-        }
+                </button>
+                <div class="p-8 rounded">
+                    <button class="cards" on:click=next_card>
+                        <div class=move || {
+                            format!(
+                                "h-[40vh] aspect-square flex items-center justify-center bg-gray-800 rounded-xl hover:bg-gray-800/70 hover:border hover:border-2 hover:border-gray-900 transition-opacity duration-[50] {}",
+                                if flash.get() { "opacity-0" } else { "opacity-100" },
+                            )
+                        }>{move || card_face(card.get())}</div>
+                    </button>
+                </div>
+            </div>
+        </div>
     }
+}
+
+fn main() {
+    console_error_panic_hook::set_once();
+    mount_to_body(App);
 }
